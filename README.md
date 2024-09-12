@@ -1,6 +1,14 @@
 # HyperLogLog
 Proyecto 1 para curso Tópicos en Manejos de Grandes Volúmenes de Datos.
 
+## Necesario
+1. Linux
+2. cmake (>= 3.1)
+3. g++ (>= 11)
+4. C++11
+
+
+## Instructiones
 ```bin/bash
 git clone https://github.com/bletelier/HyperLogLog.git
 cd HyperLogLog
