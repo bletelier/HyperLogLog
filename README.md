@@ -4,7 +4,7 @@ Proyecto 1 para curso Tópicos en Manejos de Grandes Volúmenes de Datos.
 ## Necesario
 1. Linux
 2. cmake (>= 3.1)
-3. g++ (>= 11)
+3. g++ (>= 11.0)
 4. C++11
 
 

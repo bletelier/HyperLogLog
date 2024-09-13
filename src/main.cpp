@@ -2,10 +2,15 @@
 #include<hyperloglog/hyperloglog.hpp>
 
 int main () {
-  hll::hyperloglog a(76);
-  std::cout << a.get_val() << '\n';
+  hll::hyperloglog<3> a;
+  std::string aa = "ACGTGACCG";
 
-  hll::hyperloglog b;
-  std::cout << b.get_val() << '\n';
+  for(char c: aa)
+    a.read_stream(c);
+
+  std::cout << '\n';
+  hll::hyperloglog<3, 6> b;
+  for(char c: aa)
+    b.read_stream(c);
   return 0;
 }
