@@ -4,21 +4,22 @@
 #include <string>
 #include <MurmurHash1.h>
 #include <cassert>
-#include <bitset>
+#include <set>
 #include <cmath>
 
 namespace hll {
-  template<uint16_t K, uint32_t W = 0>
+  template<uint16_t K = 0, uint32_t W = 0>
   class hyperloglog {
     public:
       typedef uint32_t t_32;
       typedef uint8_t t_8;
     protected:
-      bool is_first;
       t_32 kmer_size;
       t_32 window_size;
       std::string kmer;
       std::string window;
+
+      std::set<std::string> real;
 
       t_32 seed;
       t_8 p; 
@@ -29,17 +30,43 @@ namespace hll {
       t_8 *M;
 
     public:
+      //constructor para la union de dos hyperloglog
+      hyperloglog (hyperloglog const& A, hyperloglog const& B) { 
+        if(A.p != B.p) {
+          std::cout << "error, distinct p\n";
+          return;
+        }
+        if(A.seed != B.seed) {
+          std::cout << "error, distinct seed\n";
+          return;
+        }
+        real.clear();
+        p = A.p;
+        b = A.b;
+        seed = A.seed;
+        m = A.m;
+        alpha_m = A.alpha_m;
+        real.insert(A.real.begin(), A.real.end());
+        real.insert(B.real.begin(), B.real.end());
+        M = (t_8*) calloc(m, sizeof(t_8));
+        for(t_32 i = 0; i < m; ++i) {
+          M[i] = std::max(A.M[i], B.M[i]);
+        }
+      }
+
+      //constructor para 1 hyperloglog
       hyperloglog (t_8 _p, t_32 _seed = 5) {
-        is_first = false;
         kmer_size = 0;
         window_size = 0;
         kmer.resize(K, 'Z');
         window.resize(W, 'Z');
 
+        real.clear();
+
         if(_p > 16) p = 16; 
         if(_p < 4) p = 4; 
         p = _p;
-        m = (1 << p) - 1; //Tamaño M y es <=> (2^(p) - 1)
+        m = 1 << p; //Tamaño M y es <=> (2^(p))
         b = 32 - p;
         seed = _seed;
 
@@ -56,7 +83,11 @@ namespace hll {
         return read_stream_minimizers(c);
       }         
 
-      double estimate_cardinality() {
+      uint64_t real_cardinality() {
+        return (uint64_t) real.size();
+      }
+
+      uint64_t estimate_cardinality() {
         double Z = 0;
         t_32 zero_registers = 0;
         for(t_32 i = 0; i < m; ++i) {
@@ -73,17 +104,18 @@ namespace hll {
           if(zero_registers != 0)
             E_star = m*log2((m/zero_registers));
         }
-        else if(E > pow2_32) {
+        else if(E > (1/30)*pow2_32) {
           E_star = -(pow2_32 * log2(1 - (E/pow2_32)));
         }        
-        return E_star;
+        return (uint64_t) E_star;
       }
 
     private:
       void compute_hyperloglog () {
         if(kmer_size < K or window_size < W) return;
+        real.insert(kmer);
         t_32 hash_kmer = MurmurHash1(kmer.c_str(), K, seed);
-        t_32 index = hash_kmer >> (32 - p);
+        t_32 index = hash_kmer >> b;
         t_32 value_part = hash_kmer << p;
         t_8 value = __builtin_clz(value_part) + 1;
         //std::cout << +M[index] << ' ' << +value << '\n';
