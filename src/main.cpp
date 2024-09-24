@@ -2,33 +2,35 @@
 #include<hyperloglog/hyperloglog.hpp>
 #include<utils/utils.hpp>
 
-const uint16_t K = 20;
-int main () {
-  hll::hyperloglog<K> a (14);
-  //std::string gen2 = "ACGTGACCCG";
-  //std::string gen4 = "ATCGGATCCCCCTA";
+uint8_t const N = 5;
 
-  hll::hyperloglog<K> aa (14);
-  std::string gen = utils::parse_input("input/gen1.fna");
-  for(char c: gen)
-    a.read_stream(c);
-  std::cout << "cardinality = " << a.estimate_cardinality() << '\n';
-  std::cout << "real cardinality = " << a.real_cardinality() << '\n';
+int main (int argc, char* argv[]) {
+  uint16_t K;
+  uint32_t W;
+  uint8_t p = 22;
+  uint32_t seed = 15;
 
-  std::string gen3 = utils::parse_input("input/gen2.fna");
-  for(char c: gen3)
-    aa.read_stream(c);
-  std::cout << "cardinality = " << aa.estimate_cardinality() << '\n';
-  std::cout << "real cardinality = " << aa.real_cardinality() << '\n';
+  if(argc < 2) {
+    std::cout << "Error... execute as: ./build/main <K (kmer size)> <W (window size, default 0)>";
+    return 1;
+  }
+  if(argc == 2) W = 0;
+  else W = atoi(argv[2]);
+  K = atoi(argv[1]);
+  std::cout << "Executing with p = " << +p << ", K = " << K << " and W = " << W << '\n'; 
 
-  hll::hyperloglog<K> auaa(a, aa);
-  std::cout << "cardinality = " << auaa.estimate_cardinality() << '\n';
-  std::cout << "real cardinality = " << auaa.real_cardinality() << '\n';
-  /*hll::hyperloglog<25> auaa(a, aa);
-  std::cout << "cardinality = " << auaa.estimate_cardinality() << '\n';
-  hll::hyperloglog<25, 100> b (14);
-  for(char c: gen)
-    b.read_stream(c);
-  std::cout << "cardinality = " << b.estimate_cardinality() << '\n';*/
+  std::vector<sketch::hyperloglog> A_i;
+  for(uint8_t i = 0; i < N; ++i) {
+    sketch::hyperloglog A(p, K, W, seed);
+    utils::parse_input(A,"input/gen"+std::to_string(i+1)+".fna");
+    //std::cout << "cardinality = " << A.estimate_cardinality() << '\n';
+    //std::cout << "real cardinality = " << A.real_cardinality() << "\n\n";
+    A_i.push_back(A);
+  }
+ 
+  std::pair<double,double> errors = utils::calculate_errors(A_i);
+  std::cout << "ERM = " << errors.first << '\n';
+  std::cout << "EAM = " << errors.second << '\n';
+
   return 0;
 }

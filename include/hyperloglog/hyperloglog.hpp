@@ -7,13 +7,17 @@
 #include <set>
 #include <cmath>
 
-namespace hll {
-  template<uint16_t K = 0, uint32_t W = 0>
+namespace sketch {
   class hyperloglog {
     public:
+      typedef uint64_t t_64;
       typedef uint32_t t_32;
+      typedef uint16_t t_16;
       typedef uint8_t t_8;
     protected:
+      t_16 K;
+      t_32 W;
+
       t_32 kmer_size;
       t_32 window_size;
       std::string kmer;
@@ -32,6 +36,14 @@ namespace hll {
     public:
       //constructor para la union de dos hyperloglog
       hyperloglog (hyperloglog const& A, hyperloglog const& B) { 
+        if(A.K != B.K) {
+          std::cout << "error, distinct K\n";
+          return;
+        }
+        if(A.W != B.W) {
+          std::cout << "error, distinct W\n";
+          return;
+        }
         if(A.p != B.p) {
           std::cout << "error, distinct p\n";
           return;
@@ -46,6 +58,8 @@ namespace hll {
         seed = A.seed;
         m = A.m;
         alpha_m = A.alpha_m;
+        K = A.K;
+        W = A.W;
         real.insert(A.real.begin(), A.real.end());
         real.insert(B.real.begin(), B.real.end());
         M = (t_8*) calloc(m, sizeof(t_8));
@@ -55,7 +69,9 @@ namespace hll {
       }
 
       //constructor para 1 hyperloglog
-      hyperloglog (t_8 _p, t_32 _seed = 5) {
+      hyperloglog (t_8 _p, t_16 _K, t_32 _W = 0, t_32 _seed = 5) {
+        K = _K;
+        W = _W;
         kmer_size = 0;
         window_size = 0;
         kmer.resize(K, 'Z');
@@ -63,7 +79,7 @@ namespace hll {
 
         real.clear();
 
-        if(_p > 16) p = 16; 
+        //if(_p > 16) p = 16; 
         if(_p < 4) p = 4; 
         p = _p;
         m = 1 << p; //Tamaño M y es <=> (2^(p))
@@ -83,11 +99,11 @@ namespace hll {
         return read_stream_minimizers(c);
       }         
 
-      uint64_t real_cardinality() {
+      t_64 real_cardinality() {
         return (uint64_t) real.size();
       }
 
-      uint64_t estimate_cardinality() {
+      t_64 estimate_cardinality() {
         double Z = 0;
         t_32 zero_registers = 0;
         for(t_32 i = 0; i < m; ++i) {
@@ -98,7 +114,7 @@ namespace hll {
         double E = alpha_m*m*m*(1.0/Z); 
         double E_star = E;
 
-        long pow2_32 = 1LL<<32;
+        t_64 pow2_32 = 1LL<<32;
 
         if(E <= (5/2)*m) {
           if(zero_registers != 0)
