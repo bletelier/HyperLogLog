@@ -17,8 +17,15 @@ chmod +x build.sh
 ./compile.sh
 ./run.sh
 ```
+## Como ejecutar **kmers** con un K específico (ej: K = 25)
+```bin/bash
+./build/main 25
+```
 
-
+## Como ejecutar **minimizers** con un K y W específico (ej: K = 25 W = 100)
+```bin/bash
+./build/main 25 100
+```
 
 Autores;
 - Benjamín Letelier
