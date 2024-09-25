@@ -11,8 +11,11 @@ namespace utils {
     std::cout << "Reading stream " << input_path << '\n';
     std::ifstream input(input_path);
     std::string in;
-    while(std::getline(input, in)) {
+    int limit = 200000;
+    int c = 0;
+    while(std::getline(input, in) and c < limit) {
       if(in[0] == '>') continue;
+      c++;
       uint32_t in_size = (uint32_t) in.size();
       for(uint32_t i = 0; i < in_size; ++i) {
         char c = in[i];
@@ -26,11 +29,14 @@ namespace utils {
 
   double estimate_jaccard(sketch::hyperloglog &A, sketch::hyperloglog &B) {
     sketch::hyperloglog AuB(A,B);
-    uint64_t est_card_A = A.estimate_cardinality();
-    uint64_t est_card_B = B.estimate_cardinality();
-    uint64_t est_card_AuB = AuB.estimate_cardinality();
-    std::cout << "Est: " << est_card_A << ' ' << est_card_B << ' ' << est_card_AuB << '\n';
-    return (1.0*(est_card_A + est_card_B - est_card_AuB))/(1.0 * est_card_AuB);
+    double est_card_A = A.estimate_cardinality();
+    double est_card_B = B.estimate_cardinality();
+    double est_card_AuB = AuB.estimate_cardinality();
+    std::cout << "Esti: " << (uint64_t) est_card_A << ' ' << (uint64_t) est_card_B << ' ' << (uint64_t) est_card_AuB << '\n';
+    AuB.compare(A, B);
+
+    return (est_card_A + est_card_B - est_card_AuB)/est_card_AuB;
+  
   }
   
   double real_jaccard(sketch::hyperloglog &A, sketch::hyperloglog &B) {
@@ -44,7 +50,7 @@ namespace utils {
 
   std::pair<double,double> calculate_errors(std::vector<sketch::hyperloglog> &A_i) {
     uint8_t N = A_i.size();
-    std::cout << "Calculating ERM with N = " << +N << '\n';
+    std::cout << "Calculating Errors with N = " << +N << '\n';
     double erm = 0.0;
     double eam = 0.0;
     uint16_t tot = 0;
