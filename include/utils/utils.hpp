@@ -32,7 +32,6 @@ namespace utils {
     double est_card_A = A.estimate_cardinality();
     double est_card_B = B.estimate_cardinality();
     double est_card_AuB = AuB.estimate_cardinality();
-    double a_plus_b = 1.0*(est_card_A + est_card_B);
     std::cout << "Esti: " << (uint64_t) est_card_A << ' ' << (uint64_t) est_card_B << ' ' << (uint64_t) est_card_AuB << '\n';
     return (est_card_A + est_card_B - est_card_AuB)/(est_card_AuB); 
   }
