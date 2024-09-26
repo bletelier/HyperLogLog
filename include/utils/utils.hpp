@@ -54,12 +54,12 @@ namespace utils {
     for(uint8_t i = 0; i < N; ++i) {
       std::cout << "i = " << +(i+1) << '\n';
       for(uint8_t j = i+1; j < N; ++j) {
-        double jaccard_hat = estimate_jaccard(A_i[i], A_i[j]);
+        double jaccard_hat = std::max(0.0, estimate_jaccard(A_i[i], A_i[j]));
         double jaccard_real = real_jaccard(A_i[i], A_i[j]);
         std::cout << "hat: " << jaccard_hat << " | real: " << jaccard_real << '\n';
         double diff = 1.0 * std::abs(jaccard_hat - jaccard_real);
         std::cout << diff << '\n';
-        erm += diff/jaccard_real;
+        erm += jaccard_real == 0 ? diff : diff/jaccard_real;
         eam += diff;
         tot++;
       } 
