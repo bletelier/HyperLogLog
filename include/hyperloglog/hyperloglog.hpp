@@ -33,8 +33,7 @@ namespace sketch {
 
       double alpha_m;
       t_32 m;
-      std::vector<t_16> M;
-      std::vector<double> Zs;
+      std::vector<t_8> M;
 
     public:
       //constructor para la union de dos hyperloglog
@@ -66,7 +65,6 @@ namespace sketch {
         real.insert(A.real.begin(), A.real.end());
         real.insert(B.real.begin(), B.real.end());
         M.resize(m, 0);
-        Zs.resize(m, 0.0);
         for(t_32 i = 0; i < m; ++i) {
           M[i] = std::max(A.M[i], B.M[i]);
           assert(M[i] >= A.M[i]);
@@ -97,30 +95,12 @@ namespace sketch {
         else if(m == 64) alpha_m = 0.709;
         else if(m >= 128) alpha_m = 0.7213/(1 + (1.079/m));
         M.resize(m, 0);
-        Zs.resize(m, 0.0);
       }
 
       void read_stream (const char &c) {
         if(W == 0) return read_stream_kmers(c);
         return read_stream_minimizers(c);
       }         
-
-      //debugear y checkear si la union es válida
-      void compare(hyperloglog A, hyperloglog B) {
-        double a = 0.0, b = 0.0, aub = 0.0;
-        for(int i = 0; i < m; ++i) {
-          a += A.Zs[i];
-          b += B.Zs[i];
-          aub += Zs[i];
-          if(!(aub <= a and aub <= b)) {
-              std::cout << "error " << i << ' ';
-              std::cout << A.Zs[i] << ' ' << B.Zs[i] << ' ' << Zs[i] << ' ';
-              std::cout << A.M[i] << ' ' << B.M[i] << ' ' << M[i] << '\n';
-              break;
-          }
-        }
-      }
-
 
       t_64 real_cardinality() {
         return (uint64_t) real.size();
@@ -129,22 +109,13 @@ namespace sketch {
       double estimate_cardinality() {
         double Z = 0.0;
         t_32 zero_registers = 0;
-        //t_32 summ = 0;
         for(t_32 i = 0; i < m; ++i) {
           if(M[i] == 0) zero_registers++;
           double val = (1 << M[i]);
-          //summ+=M[i];
           double obtained = 1.0/val;
-          Zs[i] = obtained;//no es necesario pero lo use para checkear con la funcion compare
           Z += obtained;
-          //std::cout << obtained << ' ';
         }
-        /*std::cout << "summ: " << summ << '\n';
-        std::cout << "Z1: " << (Z) << '\n';
-        std::cout << "Z2: " << (1.0/Z) << '\n';
-        std::cout << "Z3: " << (1.0/Z)*m << '\n';*/
         double E = alpha_m*m*m*(1.0/Z); 
-        //std::cout << "E: " << E << '\n';
         double E_star = E;
 
         t_64 pow2_32 = 1LL<<32;
@@ -152,13 +123,11 @@ namespace sketch {
         if(E <= (5.0/2.0)*m) {
           if(zero_registers != 0) {
             double log = log2(((1.0*m)/zero_registers));
-            //std::cout << "log:" << log << '\n';
             E_star = m*log;
           }
         }
         else if(E > (1.0/30.0)*pow2_32) {
           double log = log2((1.0 - E)/(1.0*pow2_32));
-          //std::cout << "log2:" << log << '\n';
           E_star = -pow2_32 * log;
         }        
         return E_star;
@@ -170,15 +139,15 @@ namespace sketch {
       //index = 11010100100100 => M[13604] |  value = 010010001100110101 ==> M[13604] = 2
       //11010100100100000000000000000000
       //p = 14, b = 18
-      //index = 11010100100100 => M[13604] |  value = 000000000000000000 ==> ¿M[13604] = 0 or M[13604] = 19?
+      //index = 11010100100100 => M[13604] |  value = 000000000000000000 ==>  M[13604] = 19
       void compute_hyperloglog () {
         if(kmer_size < K or window_size < W) return;
         real.insert(kmer);
         t_32 hash_kmer = MurmurHash2(kmer.c_str(), K, seed);
         t_32 index = hash_kmer >> b;  
         t_32 value_part = hash_kmer << p; 
-        t_16 value = __builtin_clz(value_part) + 1;
-        if (value > b) value = 0; //si solo tengo 0 en la parte de valor ¿coloco 0 o b?
+        t_8 value = __builtin_clz(value_part) + 1;
+        if (value > b) value = b+1;
         //std::cout << +M[index] << ' ' << +value << '\n';
         M[index] = std::max(M[index] , value);
       }

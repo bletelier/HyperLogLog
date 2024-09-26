@@ -32,11 +32,9 @@ namespace utils {
     double est_card_A = A.estimate_cardinality();
     double est_card_B = B.estimate_cardinality();
     double est_card_AuB = AuB.estimate_cardinality();
+    double a_plus_b = 1.0*(est_card_A + est_card_B);
     std::cout << "Esti: " << (uint64_t) est_card_A << ' ' << (uint64_t) est_card_B << ' ' << (uint64_t) est_card_AuB << '\n';
-    AuB.compare(A, B);
-
-    return (est_card_A + est_card_B - est_card_AuB)/est_card_AuB;
-  
+    return (est_card_A + est_card_B - est_card_AuB)/(est_card_AuB); 
   }
   
   double real_jaccard(sketch::hyperloglog &A, sketch::hyperloglog &B) {
@@ -44,7 +42,7 @@ namespace utils {
     uint64_t real_card_A = A.real_cardinality();
     uint64_t real_card_B = B.real_cardinality();
     uint64_t real_card_AuB = AuB.real_cardinality();
-    std::cout << "real: " << real_card_A << ' ' << real_card_B << ' ' << real_card_AuB << '\n';
+    std::cout << "Real: " << real_card_A << ' ' << real_card_B << ' ' << real_card_AuB << '\n';
     return (1.0*(real_card_A + real_card_B - real_card_AuB))/(1.0 * real_card_AuB);
   }
 
