@@ -83,7 +83,7 @@ namespace sketch {
 
         real.clear();
 
-        //if(_p > 16) p = 16; 
+        if(_p > 16) p = 16; 
         if(_p < 4) p = 4; 
         p = _p;
         m = 1 << p; //Tamaño M y es <=> (2^(p))
@@ -95,6 +95,14 @@ namespace sketch {
         else if(m == 64) alpha_m = 0.709;
         else if(m >= 128) alpha_m = 0.7213/(1 + (1.079/m));
         M.resize(m, 0);
+      }
+
+      t_64 real_size() {
+        return (t_64) real.size() * (t_64) sizeof(*real.begin());
+      }
+
+      t_64 estimated_size() {
+        return m*(t_64) sizeof(t_8);
       }
 
       void read_stream (const char &c) {
@@ -112,8 +120,7 @@ namespace sketch {
         for(t_32 i = 0; i < m; ++i) {
           if(M[i] == 0) zero_registers++;
           double val = (1 << M[i]);
-          double obtained = 1.0/val;
-          Z += obtained;
+          Z += 1.0/val;
         }
         double E = alpha_m*m*m*(1.0/Z); 
         double E_star = E;

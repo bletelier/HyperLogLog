@@ -20,15 +20,20 @@ int main (int argc, char* argv[]) {
   std::cout << "Executing with p = " << +p << ", K = " << K << " and W = " << W << '\n'; 
 
   std::vector<sketch::hyperloglog> A_i;
-
+  
+  std::cout << "Creating sketchs from streams...\n";
   for(uint8_t i = 0; i < N; ++i) {
     sketch::hyperloglog A(p, K, W, seed);
     utils::parse_input(A,"input/gen"+std::to_string(i+1)+".fna");
     A_i.push_back(A);
+    std::cout << "\tSketch for input/gen" << i+1 << ".fna done\n";
+    //std::cout << "size_real_gen" << i+1 << " = " << A.real_size() << " bytes\n";
+    //std::cout << "size_esti_gen" << i+1 << " = " << A.estimated_size() << " bytes\n";
   }
+  std::cout << "done\n";
  
   std::pair<double,double> errors = utils::calculate_errors(A_i);
   std::cout << "ERM = " << errors.first << '\n';
-  std::cout << "EAM = " << errors.second << '\n';
+  std::cout << "EAM = " << errors.second << "\n\n";
   return 0;
 }
